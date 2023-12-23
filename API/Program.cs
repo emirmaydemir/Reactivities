@@ -1,3 +1,4 @@
+using API.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -6,12 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<DataContext>(opt => {
-    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+//burada kendi oluşturduğumuz extension sınıfımızdan aldık servisleri yeni servis ekledikçe oraya ekliyoruz bu sayede program.cs içerisi temiz gözüküyor.
+builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -22,6 +19,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("CorsPolicy");//tarayıcının güvenmesi için ara katman olarakta ekledik bu cors hizmetini
 
 app.UseAuthorization();
 

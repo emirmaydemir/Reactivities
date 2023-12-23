@@ -1,4 +1,6 @@
+using Application.Activities;
 using Domain;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -8,31 +10,60 @@ namespace API.Controllers
     //buna root falan yazmadık çünkü Bir kökü vardır ve denetleyici tabanından türetilir çünkü temel API'mize bunu yerleştirdik.
     public class ActivitiesController : BaseApiController
     {
-        private readonly DataContext _context; //readonly özniteliği, bu alanın sadece kurucu metot içinde başlatılabileceğini ve başlatıldıktan sonra değerinin değiştirilemeyeceğini belirtir.
+        //private readonly DataContext _context; //readonly özniteliği, bu alanın sadece kurucu metot içinde başlatılabileceğini ve başlatıldıktan sonra değerinin değiştirilemeyeceğini belirtir.
 
         //services.AddDbContext<DataContext>(options =>
         //options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
         //program.cs içerisinde tanımladığımız bu kodda persistence içerisinde yer alan DataContext türünde bir şey nesne oluşturursak 
         //ASP.net core dependency injection kullanmış olduk aslında yazdığımız bu servis sayesinde ASP.NET Core runtime'ı bu parametreyi otomatik olarak çözer ve enjekte eder. 
         //Aşağıdaki konfigürasyon, DataContext sınıfının ActivitiesController'ın kurucu metoduna otomatik olarak enjekte edilmesini sağlar.
-        public ActivitiesController(DataContext context)
-        {
-            _context = context;         
-        }
+        //public ActivitiesController(DataContext context)
+        //{
+        //    _context = context;         
+        //}
 
+        //Bu nedenle, Mediator.Send metoduna bir sorgu nesnesi geçiriyorsunuz. Bu sorgu nesnesi, işlemek istediğiniz talebi temsil eder ve bu talep belirli bir işleyici (handler) tarafından ele alınacaktır.
+        //Eğer Mediator.Send metoduna bir işleyici sınıfı geçirseydiniz, bu durumda doğrudan işleyici sınıfı üzerinden bir talep oluşturmuş olur ve MediatR'ın tasarım felsefesine aykırı bir durum ortaya çıkardınız. Çünkü işleyici sınıfı, bir talebi ele almak yerine, sadece belirli bir talep türü ile ilişkilidir.
+        //--Bu controller base api'den türediği için orada yer alan protected değişken olan Mediatoru kullanabiliyor--
         [HttpGet] //api/activities
         public async Task<ActionResult<List<Activity>>> GetActivities()
         {
-            return await _context.Activities.ToListAsync();
+            return await Mediator.Send(new List.Query());
         }
 
         //içerisine parametre olarak yazdığımız şey url ekinde nasıl çağıracağımızı belirler yukarıdakini //api/activities diye çağırırken bunu //api/activities/id şeklinde çağırıyoruz.
         //burada yer alan id ismi ile fonksiyonda parametre olarak yer alan id eşleşmeli çünkü requestte gelen id onunla eşleşip anlayabilir.
         [HttpGet("{id}")] //api/activities/'burada istekte gelen id bilgisi yer alacak'
+        //yukarıda bahsettiğim  gibi mediator hizmetini bir kere list sınıfı ile sağladığımız için kaydoldu zaten diğer sınıflar için ekstradan kütüphane importuna gerek kalmıyor.
         public async Task<ActionResult<Activity>> GetActivity(Guid id)
         {
-            return await _context.Activities.FindAsync(id);
+            return await Mediator.Send(new Details.Query{Id = id});
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CreateActivity(Activity activity)
+        {
+            await Mediator.Send(new Create.Command { Activity = activity });
+
+            return Ok();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditActivity(Guid id, Activity activity)
+        {
+            activity.Id = id;
+
+            await Mediator.Send(new Edit.Command { Activity = activity });
+
+            return Ok();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteActivity(Guid id)
+        {
+            await Mediator.Send(new Delete.Command { Id = id});
+
+            return Ok();
+        }
     }
 }
