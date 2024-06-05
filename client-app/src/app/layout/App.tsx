@@ -1,27 +1,26 @@
-import { useEffect } from "react";
 import { Container } from "semantic-ui-react";
 import NavBar from "./NavBar";
-import ActivityDashboard from "../../features/activities/dashboard/ActivityDashboard";
-import LoadingComponent from "./LoadingComponent";
-import { useStore } from "../stores/store";
 import { observer } from "mobx-react-lite";
+import { Outlet, useLocation } from "react-router-dom";
+import HomePage from "../../features/home/HomePage";
 
 function App() {
-  const { activityStore } = useStore();
-
-  useEffect(() => {
-    activityStore.loadActivities();
-  }, [activityStore]);
-
-  if (activityStore.loadingInitial)
-    return <LoadingComponent content="Loading App" />;
+  const location = useLocation(); // bu bize url yolunu yani hangi sayfada olduğumuzu söyleyecektir.
 
   return (
     <>
-      <NavBar />
-      <Container style={{ marginTop: "7em" }}>
-        <ActivityDashboard />
-      </Container>
+      {/*Burada eğer url adresimiz '/' ise yani ana ekransa homepageyi çağır değilse normal aktivite ekranlarım outlet ile işlensin diyorum yani ana sayfayı ayırdım diğer yapıdan aynı zamanda routes.tsx içerisinde parametre olarak eklememe gerek kalmadı. */}
+      {location.pathname === "/" ? (
+        <HomePage />
+      ) : (
+        <>
+          <NavBar />
+          <Container style={{ marginTop: "7em" }}>
+            {/*<Outlet />, şu anki rota hangi bileşeni gerektiriyorsa onu render eder. Main.tsx dosyasında bunun yolu verildi ve Routes.tsx dosyasında ayarı yapıldı bunun üstündeki bileşenler sürekli gözükecek ama burada sadece çağırılan sayfalar render edilecek */}
+            <Outlet />
+          </Container>
+        </>
+      )}
     </>
   );
 }
