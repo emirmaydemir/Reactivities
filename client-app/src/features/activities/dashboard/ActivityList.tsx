@@ -1,56 +1,27 @@
-import { Button, Item, Label, Segment } from "semantic-ui-react";
-import { SyntheticEvent, useState } from "react";
+import { Header } from "semantic-ui-react";
 import { useStore } from "../../../app/stores/store";
 import { observer } from "mobx-react-lite";
-import { Link } from "react-router-dom";
+import ActivityListItem from "./ActivityListItem";
+import { Fragment } from "react";
 
 export default observer(function ActivityList() {
   const { activityStore } = useStore();
-  const { deleteActivity, acitivitiesByDate, loading } = activityStore;
-  const [target, setTarget] = useState("");
-
-  function handleActivityDelete(
-    e: SyntheticEvent<HTMLButtonElement>, // bu sayede sadece basılan aktiviteye yüklenme efekti gelecek.
-    id: string
-  ) {
-    setTarget(e.currentTarget.name); // bu sayede sadece basılan aktiviteye yüklenme efekti gelecek.
-    deleteActivity(id);
-  }
+  const { groupedActivities } = activityStore;
 
   return (
-    <Segment>
-      <Item.Group divided>
-        {acitivitiesByDate.map((activity) => (
-          <Item key={activity.id}>
-            <Item.Content>
-              <Item.Header as="a">{activity.title}</Item.Header>
-              <Item.Meta>{activity.date}</Item.Meta>
-              <Item.Description>
-                <div>{activity.description}</div>
-                <div>{activity.city}</div>
-              </Item.Description>
-              <Item.Extra>
-                <Button
-                  as={Link}
-                  to={`/activities/${activity.id}`}
-                  floated="right"
-                  content="View"
-                  color="blue"
-                />
-                <Button
-                  name={activity.id}
-                  loading={loading && target === activity.id} // bu sayede sadece basılan aktiviteye yüklenme efekti gelecek.
-                  onClick={(e) => handleActivityDelete(e, activity.id)}
-                  floated="right"
-                  content="Delete"
-                  color="red"
-                />
-                <Label basic content={activity.category} />
-              </Item.Extra>
-            </Item.Content>
-          </Item>
-        ))}
-      </Item.Group>
-    </Segment>
+    /*Activity storeden gruplar halinde diziler gelmişti. Tarihlerine göre key almışlardı işte gruplar halinde ekranda gösterilmesini sağlayan yapı burada kuruldu. */
+    /*Fragment ile gruplarına göre getirdik bu sayede aynı grupta olanlar aynı tarihin altında bitişik olarak geldi. */
+    <>
+      {groupedActivities.map(([group, activities]) => (
+        <Fragment key={group}>
+          <Header sub color="teal">
+            {group}
+          </Header>
+          {activities.map((activity) => (
+            <ActivityListItem key={activity.id} activity={activity} />
+          ))}
+        </Fragment>
+      ))}
+    </>
   );
 });
