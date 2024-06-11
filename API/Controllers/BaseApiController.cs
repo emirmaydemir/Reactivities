@@ -1,3 +1,4 @@
+using Application.Core;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,5 +17,15 @@ namespace API.Controllers
         //Bu özellik, _mediator alanına, eğer değeri null ise servis sağlayıcıdan mediator örneği alınır ve kaydedilir. Daha sonra _mediator değeri artık null olmadığı için, bir daha servis çağrısı yapılmaz ve _mediator değeri doğrudan kullanılır.
         //yani bir controller mediatorü kullanmak istediğinde servislerde tanımladığımız "builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(List.Handler).Assembly));" kodu çalışarak mediatorumuzu alacağız ve bu değeri _mediator değişkeni içerisine kaydettiğimiz için birdaha servisi boş yere çağırmyacağız.
         protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+
+        protected ActionResult HandleResult<T>(Result<T> result)
+        {
+            if(result == null) return NotFound();
+            if (result.IsSuccess && result.Value != null)
+                return Ok(result.Value);
+            if (result.IsSuccess && result.Value == null)
+                return NotFound();
+            return BadRequest(result.Error);
+        }
     }
 }

@@ -1,5 +1,7 @@
 using Application.Activities;
 using Application.Core;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -29,6 +31,12 @@ namespace API.Extensions
             //Bu kullanım, belirli bir assembly içindeki tüm MediatR handler'larını otomatik olarak kaydetmek için RegisterServicesFromAssemblies yöntemini kullanır. Yani, List.Handler sınıfının bulunduğu assembly içindeki tüm MediatR handler'larını otomatik olarak kaydeder.
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(typeof(List.Handler).Assembly));
             services.AddAutoMapper(typeof(MappingProfiles).Assembly);
+            //oto doğrulama servisini ekledik.
+            //services.AddFluentValidationAutoValidation() metodu, FluentValidation'u ASP.NET Core model doğrulama sistemine entegre eder. Bu, ASP.NET Core'un model bağlama süreci sırasında FluentValidation doğrulayıcılarının otomatik olarak çalıştırılmasını sağlar.
+            services.AddFluentValidationAutoValidation();
+            //Burada create ile editin doğrulama özellikleri aynı olduğu için birini tanısa yetiyor o yüzden createyi verdik önbelleğine kaydetmesi için ve dependency injection yaptık.
+            //Create burada sadece bir örnektir. Amacı, FluentValidation'un hangi assembly'yi tarayacağını belirtmektir. Sizin örneğinizde Create yerine başka bir sınıf da kullanılabilir. Önemli olan, bu sınıfın, validator sınıflarınızın bulunduğu aynı assembly'de olmasıdır. Eğer Edit doğrulama kuralları da aynı assembly'deyse, Create sınıfını kullanmanız yeterlidir, çünkü AddValidatorsFromAssemblyContaining<Create>() tüm assembly'yi tarar ve tüm validator sınıflarını bulur.
+            services.AddValidatorsFromAssemblyContaining<Create>();
 
             return services;
          }
