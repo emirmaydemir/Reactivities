@@ -26,6 +26,7 @@ axios.interceptors.response.use(
     const { data, status, config } = error.response as AxiosResponse;
     switch (status) {
       case 400:
+        // Kullanıcılar, URL'leri veya form alanlarını manipüle ederek geçersiz id değerleri gönderebilirler. Bu, güvenlik açısından önemli olabilir çünkü kötü niyetli bir kullanıcı, sistemdeki varlıkları keşfetmek veya özel bilgilere erişmeye çalışabilir.
         //Hata yanıtındaki data.errors nesnesinin id adında bir özelliği olup olmadığını kontrol eder. Ve İsteğin HTTP metodunun GET olup olmadığını kontrol eder.
         if (config.method === "get" && data.errors.hasOwnProperty("id")) {
           router.navigate("/not-found");
