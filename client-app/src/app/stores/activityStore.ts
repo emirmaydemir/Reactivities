@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { Activity } from "../models/activity";
 import agent from "../api/agent";
 import { v4 as uuid } from "uuid";
+import { format } from "date-fns";
 
 export default class ActivityStore {
   activityRegistry = new Map<string, Activity>();
@@ -17,7 +18,7 @@ export default class ActivityStore {
   //Aktiviteleri tarih bilgilerine göre sıralar.
   get activitiesByDate() {
     return Array.from(this.activityRegistry.values()).sort(
-      (a, b) => Date.parse(a.date) - Date.parse(b.date)
+      (a, b) => a.date!.getTime() - b.date!.getTime()
     );
   }
 
@@ -54,7 +55,7 @@ export default class ActivityStore {
     return Object.entries(
       //Bu fonksiyon dizi listesi tutar yani bir nesne var içerisinde bir sürü dizi oluşacak. Aynı tarihteki aktiviteler aynı dizide toplanacak.
       this.activitiesByDate.reduce((activities, activity) => {
-        const date = activity.date; // Mevcut aktivitenin tarihini alır.
+        const date = format(activity.date!, "dd MMM yyyy"); // Mevcut aktivitenin tarihini alır. Ama split sayesinde sadece 23.08.2000 gibi bir tarih alır.
         activities[date] = activities[date]
           ? [...activities[date], activity] // Eğer 'activities' nesnesinde bu tarih için bir giriş varsa, mevcut aktiviteyi bu tarihe ait aktiviteler listesine ekler.
           : [activity]; // Eğer yoksa, yeni bir liste oluşturur ve aktiviteyi bu listeye ekler.
@@ -98,7 +99,7 @@ export default class ActivityStore {
   };
 
   private setActivity = (activity: Activity) => {
-    activity.date = activity.date.split("T")[0];
+    activity.date = new Date(activity.date!);
     this.activityRegistry.set(activity.id, activity);
   };
 
