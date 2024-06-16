@@ -1,11 +1,30 @@
 using Domain;
+using Microsoft.AspNetCore.Identity;
 
 namespace Persistence
 {
     public class Seed
     {
-        public static async Task SeedData(DataContext context)
+        //UserManager, kalıcı depolamada bir kullanıcıyı yönetmek için API'ler sağlar.
+        public static async Task SeedData(DataContext context, UserManager<AppUser> userManager)
         {
+            //Eğer kullanıcı yoksa yeni kullancıları ekle demek istiyor burada sanırım.
+            //UserManager, ASP.NET Core Identity kütüphanesinin bir parçasıdır ve kullanıcı yönetimi ile ilgili çeşitli işlemleri yapmak için kullanılır. Bu işlemler arasında kullanıcı oluşturma, şifre doğrulama, kullanıcı bilgilerini güncelleme ve kullanıcıları silme gibi işlemler bulunur. Bu örnekte UserManager nesnesi, AppUser türünden kullanıcıları yönetmek için kullanılıyor. AppUser muhtemelen IdentityUser sınıfından türetilmiş bir sınıftır ve kullanıcıya özgü ek özellikler içerebilir.
+            if(!userManager.Users.Any())
+            {
+                var users = new List<AppUser> // Username ve email gibi özellikleri IdentityUser sayesinde aldı.
+                {
+                    new AppUser{DisplayName = "Bob", UserName = "bob", Email = "bob@test.com"},
+                    new AppUser{DisplayName = "Tom", UserName = "tom", Email = "tom@test.com"},
+                    new AppUser{DisplayName = "Jane", UserName = "jane", Email = "jane@test.com"},
+                };
+
+                foreach(var user in users)
+                {
+                    await userManager.CreateAsync(user, "Pa$$w0rd");
+                }
+            }
+
             if (context.Activities.Any()) return;
             
             var activities = new List<Activity>

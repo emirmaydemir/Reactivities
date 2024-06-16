@@ -1,6 +1,7 @@
 using Application.Activities;
 using Domain;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -30,9 +31,11 @@ namespace API.Controllers
         {
             return HandleResult(await Mediator.Send(new List.Query()));
         }
-
+        
         //içerisine parametre olarak yazdığımız şey url ekinde nasıl çağıracağımızı belirler yukarıdakini //api/activities diye çağırırken bunu //api/activities/id şeklinde çağırıyoruz.
         //burada yer alan id ismi ile fonksiyonda parametre olarak yer alan id eşleşmeli çünkü requestte gelen id onunla eşleşip anlayabilir.
+        //Kimlik doğrulamamızın yolu, bahsettiğim gibi, JWT taşıyıcı jetonunu bir yetki belgesiyle göndermektir. JWT bearer diye bir şey kullandık identity service extensionda onun sayesinde algılayacak bunu.
+        //[Authorize]  Bu kod sayesinde aktiviteye ulaşmanın tek yolu kimlik doğrulama olacaktır. Yani postman üzerinden saldırı yapamayacaklar bize headere token bilgisini eklemeleri gerekecek falan yani güvenliği sağladık. Ama bunu kullanmamıza gerek kalmadı çünkü program.cs içerisinde bunu tüm controllere entegre ettik addcontroller hizmeti içerisinde.
         [HttpGet("{id}")] //api/activities/'burada istekte gelen id bilgisi yer alacak'
         //yukarıda bahsettiğim  gibi mediator hizmetini bir kere list sınıfı ile sağladığımız için kaydoldu zaten diğer sınıflar için ekstradan kütüphane importuna gerek kalmıyor.
         public async Task<ActionResult> GetActivity(Guid id)

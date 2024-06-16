@@ -1,9 +1,11 @@
 using Domain;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Persistence
 {
-    public class DataContext : DbContext
+    //Identity için DbSet belirtmemize gerek kalmadı normalde her tablo için belirtilir ama bunun tablolarını sistem kendi algılıyor ve oluşturuyor.
+    public class DataContext : IdentityDbContext<AppUser>
     {
         //base kelimesi, bir sınıfın temel sınıfına (base class) erişim sağlar. Yani, bir sınıf diğer bir sınıftan türemişse (inheritance), türeyen sınıf içinde base kelimesi kullanılarak temel sınıfın öğelerine (property, method, constructor vb.) erişebilirsiniz.
         //Dolayısıyla, : base(options) ifadesi, DbContext sınıfının constructor'ını çağırarak, DbContext sınıfının temel sınıfının (base class) constructor'ını yürütür ve bu sayede DbContext sınıfının başlatılmasını gerçekleştirir. Bu başlatma işlemi, içerisine geçirilen options parametresi aracılığıyla veritabanı bağlamının gerekli yapılandırmalarını alır. 
