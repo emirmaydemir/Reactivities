@@ -1,13 +1,11 @@
 using Application.Activities;
 using Domain;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 namespace API.Controllers
 {
+    [AllowAnonymous]
     //buna root falan yazmadık çünkü Bir kökü vardır ve denetleyici tabanından türetilir çünkü temel API'mize bunu yerleştirdik.
     public class ActivitiesController : BaseApiController
     {

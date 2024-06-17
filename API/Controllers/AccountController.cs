@@ -48,12 +48,14 @@ namespace API.Controllers
             //IdntityServiceExtensions içerisinde mail ve şifre ile ilgili kontroller var fakat kullanıcı adı için hazır kontrol kodu yazmamış geliştiriciler o yüzden kendimiz yazıyoruz.
             if(await _userManager.Users.AnyAsync(x => x.UserName == registerDto.Username))
             {
-                return BadRequest("Username is already taken");
+                ModelState.AddModelError("username", "Username taken"); //ModelState isimli bir tanımlayıcı var .net corede hatamızı buna key value şeklinde verip öyle döndürüyoruz.
+                return ValidationProblem(); //Sistemin oluşturduğu hata mesajları formatında hata mesajı oluşturmamı sağlıyor yukarıda tanımladığım hata mesajını sisteme entegre etmiş oldum bir nevi.
             }
 
             if(await _userManager.Users.AnyAsync(x => x.Email == registerDto.Email)) //Bunun kontrolü identity özellikleri arasında yer alıyor fakat hata mesajı içi böyle bir if açtık diğer hata mesajları bizi tatmin etmedi.
             {
-                return BadRequest("Email is already taken");
+                ModelState.AddModelError("email", "Email taken"); //ModelState isimli bir tanımlayıcı var .net corede hatamızı buna key value şeklinde verip öyle döndürüyoruz.
+                return ValidationProblem(); //Sistemin oluşturduğu hata mesajları formatında hata mesajı oluşturmamı sağlıyor yukarıda tanımladığım hata mesajını sisteme entegre etmiş oldum bir nevi.
             }
 
             var user = new AppUser
@@ -74,10 +76,15 @@ namespace API.Controllers
         }
 
         //Burayı tokene bağlı kıldık authorize yazarak diğer endpointler tokensizde çalışıyor.
+        //[Authorize] özniteliği, bu eylemin kimliği doğrulanmış kullanıcılara açık olduğunu belirtir.
         [Authorize] //Yukarıda AllowAnonymous demiştik tüm controllere uygulanıyor normalde ama bu uç nokta için uygulanmasın demek istedik. Burası için kimlik doğrulama yapılacak yani. 
         [HttpGet] //hiçbir parametremiz olmayacak. Yani birisi API hesabı uç noktasına bir istekte bulunursa, o zaman onların bilgilerini alacağız.
         public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
+            //AÇIKLAMALARI OKU ÇOK ÖNEMLİ AŞAĞIDAKİ 3 AÇIKLAMAYIDA OKU.
+            //Bu mekanizma, kullanıcının kimliği doğrulanmış bir istekte bulunmasını gerektirir, token'ındaki e-posta claim'ini kullanarak kullanıcıyı bulur ve kullanıcının bilgilerini bir DTO (Data Transfer Object) olarak döner. Bu şekilde, istemci tarafında kullanıcı bilgileri ve token'ı yeniden kullanılabilir.
+            //Yani postmandan token ile istek atıyoruz ya bu endpointe işte o tokenin başlık bilgisinde email, username gibi bilgiler yer alıyor ya heh işte istek atan tokendeki Email bilgisini çekip mevcut kullanıcıyı buluyoruz.
+            //Sonuçta her kullanıcının tokeni unique yani eşsiz. User ve claim denen şeyde tokenin içerisinde yer alan Email oluyor. Bu uç noktaya sadece token ile istek atabiliyoruz.
             var user = await _userManager.FindByEmailAsync(User.FindFirstValue(ClaimTypes.Email));
 
             return CreateUserObject(user);

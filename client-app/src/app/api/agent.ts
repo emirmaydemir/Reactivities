@@ -4,6 +4,7 @@ import { Activity } from "../models/activity";
 import { toast } from "react-toastify";
 import { router } from "../router/Routes";
 import { store } from "../stores/store";
+import { User, UserFormValues } from "../models/user";
 
 // Promise, gelecekte tamamlanacak (veya başarısız olacak) bir işlemi temsil eder. resolve: İşlem başarılı olduğunda çağrılır.
 const sleep = (delay: number) => {
@@ -13,6 +14,14 @@ const sleep = (delay: number) => {
 };
 
 axios.defaults.baseURL = "http://localhost:5000/api"; //temel url miz bir yere url yazınca başına bu gelecek sonuna ise fonksiyona parametre olarak gelen değer gelecek.
+
+//Bu kod parçası, Axios isteklerinde bir interceptor (ara kesici) kullanarak her istekten önce belirli bir işlemi gerçekleştirir. Özetle, bu kod, her Axios isteği gönderilmeden önce istek yapılandırmasını kontrol eder ve Authorization başlığına bir JWT (JSON Web Token) ekler. İşte adım adım açıklaması:
+//Bunu yapmazsak istekten sonra tokeni kontrol edebilir ve yetkisiz işlem hatası alırız.
+axios.interceptors.request.use((config) => {
+  const token = store.commonStore.token;
+  if (token && config.headers) config.headers.Authorization = `Bearer ${token}`; //Bearer diye başlar jwt tokenler o yüzden onu yazdık başa.
+  return config;
+});
 
 //Bu kod parçasında, bir response interceptor kullanılarak API cevapları geciktirilmektedir. Request interceptors ise api isteğinden önce çalışır.
 //Api cevaplarını geciktirmek için kullanıyoruz.
@@ -63,7 +72,7 @@ axios.interceptors.response.use(
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data; //bu api isteklerinde response.data yazmak yerine sadece response yazmamızı sağlayacak.
 
-const request = {
+const requests = {
   get: <T>(url: string) => axios.get<T>(url).then(responseBody),
   post: <T>(url: string, body: {}) =>
     axios.post<T>(url, body).then(responseBody),
@@ -72,16 +81,24 @@ const request = {
 };
 
 const Activities = {
-  list: () => request.get<Activity[]>("/activities"),
-  details: (id: string) => request.get<Activity>(`/activities/${id}`),
-  create: (activity: Activity) => request.post<void>("/activities", activity),
+  list: () => requests.get<Activity[]>("/activities"),
+  details: (id: string) => requests.get<Activity>(`/activities/${id}`),
+  create: (activity: Activity) => requests.post<void>("/activities", activity),
   update: (activity: Activity) =>
-    request.put<void>(`/activities/${activity.id}`, activity),
-  delete: (id: string) => request.del<void>(`/activities/${id}`),
+    requests.put<void>(`/activities/${activity.id}`, activity),
+  delete: (id: string) => requests.del<void>(`/activities/${id}`),
+};
+
+const Account = {
+  current: () => requests.get<User>("/account"),
+  login: (user: UserFormValues) => requests.post<User>("/account/login", user),
+  register: (user: UserFormValues) =>
+    requests.post<User>("/account/register", user),
 };
 
 const agent = {
   Activities,
+  Account,
 };
 
 export default agent;

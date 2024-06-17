@@ -15,7 +15,7 @@ export default observer(function ActivityDashboard() {
   }, [activityRegistry.size]); // <= 1 dememizin sebebi 1 aktivite seçip sayfayı yenilersek dizimizde tek aktivite kalır ve api isteği atmadığı için tek aktivite gözükür ekranda ama bu çözüm sayesinde bu sorundan kurtulduk.
 
   if (activityStore.loadingInitial)
-    return <LoadingComponent content="Loading App" />;
+    return <LoadingComponent content="Loading activities..." />;
 
   return (
     <Grid>
