@@ -1,7 +1,9 @@
 using Application.Activities;
 using Application.Core;
+using Application.Interfaces;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -37,6 +39,10 @@ namespace API.Extensions
             //Burada create ile editin doğrulama özellikleri aynı olduğu için birini tanısa yetiyor o yüzden createyi verdik önbelleğine kaydetmesi için ve dependency injection yaptık.
             //Create burada sadece bir örnektir. Amacı, FluentValidation'un hangi assembly'yi tarayacağını belirtmektir. Sizin örneğinizde Create yerine başka bir sınıf da kullanılabilir. Önemli olan, bu sınıfın, validator sınıflarınızın bulunduğu aynı assembly'de olmasıdır. Eğer Edit doğrulama kuralları da aynı assembly'deyse, Create sınıfını kullanmanız yeterlidir, çünkü AddValidatorsFromAssemblyContaining<Create>() tüm assembly'yi tarar ve tüm validator sınıflarını bulur.
             services.AddValidatorsFromAssemblyContaining<Create>();
+            //AddHttpContextAccessor(): IHttpContextAccessor hizmetini DI (Dependency Injection) konteynerine ekler. Bu, herhangi bir sınıfın HTTP bağlamına erişebilmesini sağlar.
+            services.AddHttpContextAccessor();
+            //arayüzünü uygulayan UserAccessor sınıfını DI konteynerine ekler. Bu sayede, bir istek kapsamı boyunca aynı UserAccessor örneği kullanılır.
+            services.AddScoped<IUserAccessor, UserAccessor>();
 
             return services;
          }

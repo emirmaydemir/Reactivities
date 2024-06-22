@@ -16,5 +16,24 @@ namespace Persistence
         //Activity türündeki nesnelerin veritabanındaki Activities tablosunu temsil ettiğini belirtiyoruz.
         //DbSet üzerinde çeşitli sorgular ve işlemler gerçekleştirilebilir. Örneğin, veritabanına yeni nesneler eklemek, varolan nesneleri sorgulamak veya güncellemek gibi işlemler DbSet üzerinden yapılır.
         public DbSet<Activity> Activities { get; set; } //Activities, veritabanındaki tablonun adını belirtirken DbSet<Activity> ifadesi, Domain altında yer alan Activity modelinin değişkenlerini kullanarak tablodaki sütunları temsil eder.
+        public DbSet<ActivityAttendee> ActivityAttendees { get; set; }
+
+        //Bu yapılandırma, ActivityAttendee tablosunun AppUser ve Activity tabloları arasında bir ara tablo(join table) olarak hizmet vermesini sağlar, böylece bir kullanıcının birden fazla etkinliğe katılabilmesi ve bir etkinliğin birden fazla katılımcısı olabilmesi mümkün hale gelir.
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<ActivityAttendee>(x => x.HasKey(aa => new { aa.AppUserId, aa.ActivityId }));
+
+            builder.Entity<ActivityAttendee>()
+                .HasOne(u => u.AppUser)
+                .WithMany(u => u.Activities)
+                .HasForeignKey(aa => aa.AppUserId);
+
+            builder.Entity<ActivityAttendee>()
+                .HasOne(u => u.Activity)
+                .WithMany(u => u.Attendees)
+                .HasForeignKey(aa => aa.ActivityId);
+        }
     }
 }

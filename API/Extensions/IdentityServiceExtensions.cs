@@ -1,7 +1,9 @@
 using System.Text;
 using API.Services;
 using Domain;
+using Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
 
@@ -36,6 +38,15 @@ namespace API.Extensions
                     };
                 });
 
+            //Infrastructure katmanı içerisinde yazdığımız aktivite yetkilendirme kodunu burada servis olarak sunuyoruz. IsHostRequirement isimli sınıfta yer alıyor.
+            services.AddAuthorization(opt =>
+            {
+                opt.AddPolicy("IsActivityHost", policy => 
+                {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
             //services.AddScoped<TokenService>() ifadesi, TokenService sınıfının bir HTTP isteği boyunca aynı örnekle kullanılmasını sağlar ve bu sınıfın diğer bileşenlere enjekte edilmesini kolaylaştırır.
             services.AddScoped<TokenService>(); // Kendi oluşturduğum servisi eklemek için kullanılan kod parçası.
 
