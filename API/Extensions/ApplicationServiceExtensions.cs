@@ -44,6 +44,13 @@ namespace API.Extensions
             //arayüzünü uygulayan UserAccessor sınıfını DI konteynerine ekler. Bu sayede, bir istek kapsamı boyunca aynı UserAccessor örneği kullanılır.
             services.AddScoped<IUserAccessor, UserAccessor>();
 
+            // JSON serileştirme ayarları: Bu ayar sayesinde json olarak dönen adlarının pascal case olarak kalmasını sağlayacaktır. Ben adı UserName yapınca userName dönüyor çünkü.
+            /*services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = null;
+            });*/
+
             return services;
          }
     }

@@ -1,8 +1,10 @@
 import { makeAutoObservable, runInAction } from "mobx";
-import { Activity } from "../models/activity";
+import { Activity, ActivityFormValues } from "../models/activity";
 import agent from "../api/agent";
 import { v4 as uuid } from "uuid";
 import { format } from "date-fns";
+import { store } from "./store";
+import { Profile } from "../models/profile";
 
 export default class ActivityStore {
   activityRegistry = new Map<string, Activity>();
@@ -99,6 +101,20 @@ export default class ActivityStore {
   };
 
   private setActivity = (activity: Activity) => {
+    const user = store.userStore.user; //Şu anki mevcut kullanıcıyı alıyoruz istekte bulunan kullanıcıyı yani.
+    //Yapacağımız ilk şey kullanıcı nesnesine sahip olup olmadığımızı kontrol etmek olacak.
+    if (user) {
+      //activity.attendees listesindeki her bir katılımcının userName özelliği, mevcut kullanıcının username özelliği ile karşılaştırılıyor. Eğer eşleşme bulunursa, activity.isGoing değeri true olur, aksi takdirde false olur.
+      activity.isGoing = activity.attendees!.some(
+        (a) => a.userName === user.username
+      );
+      //Etkinliğin hostUsername değeri, mevcut kullanıcının username değeri ile karşılaştırılıyor. Eğer eşleşme bulunursa, activity.isHost değeri true olur, aksi takdirde false olur.
+      activity.isHost = activity.hostUsername === user.username;
+      //activity.attendees listesindeki katılımcılar arasında userName değeri activity.hostUsername ile eşleşen katılımcı bulunur ve bu katılımcı activity.host değişkenine atanır.
+      activity.host = activity.attendees?.find(
+        (x) => x.userName === activity.hostUsername
+      );
+    }
     activity.date = new Date(activity.date!);
     this.activityRegistry.set(activity.id, activity);
   };
@@ -111,40 +127,42 @@ export default class ActivityStore {
     this.loadingInitial = state;
   };
 
-  createActivity = async (activity: Activity) => {
-    this.loading = true;
+  createActivity = async (activity: ActivityFormValues) => {
     activity.id = uuid();
+    const user = store.userStore.user; //şu anki mwvcut kullanıcı getiriliyor.
+    const attendee = new Profile(user!); //katılımcılar değişkenine şu anki kullanıcı ekleniyor
     try {
+      //Önce aktivite oluşturuluyor sonra aktivite hostu ve seçilen aktivite önbelleğimize alınıyor. Çünkü aktivitenin katılımcı bilgileri updateAttendance fonksiyonunda ayarlanıyor burada sadece aktiviteye ait bilgiler güncelleniyor.
       await agent.Activities.create(activity);
+      const newActivity = new Activity(activity);
+      newActivity.hostUsername = user!.username;
+      newActivity.attendees = [attendee];
+      this.setActivity(newActivity);
       runInAction(() => {
-        this.activityRegistry.set(activity.id, activity);
-        this.selectedActivity = activity;
-        this.editMode = false;
-        this.loading = false;
+        this.selectedActivity = newActivity;
       });
     } catch (error) {
       console.log(error);
-      runInAction(() => {
-        this.loading = false;
-      });
     }
   };
 
-  updateActivity = async (activity: Activity) => {
-    this.loading = true;
+  updateActivity = async (activity: ActivityFormValues) => {
     try {
       await agent.Activities.update(activity);
       runInAction(() => {
-        this.activityRegistry.set(activity.id, activity);
-        this.selectedActivity = activity;
-        this.editMode = false;
-        this.loading = false;
+        if (activity.id) {
+          //Güncellenmiş aktivite değişkeni oluşturuyor bu satır değerleri eşleyerek güncel değeri değişkene atıyor.
+          //Bu satır, mevcut bir aktivite nesnesini (getActivity(activity.id)) ve yeni aktivite değerlerini (activity) birleştirerek güncellenmiş bir aktivite nesnesi oluşturur.
+          const updateActivity = {
+            ...this.getActivity(activity.id),
+            ...activity,
+          };
+          this.activityRegistry.set(activity.id, updateActivity as Activity);
+          this.selectedActivity = updateActivity as Activity;
+        }
       });
     } catch (error) {
       console.log(error);
-      runInAction(() => {
-        this.loading = false;
-      });
     }
   };
 
@@ -161,6 +179,61 @@ export default class ActivityStore {
       runInAction(() => {
         this.loading = false;
       });
+    }
+  };
+
+  updateAttendance = async () => {
+    const user = store.userStore.user;
+    this.loading = true;
+    try {
+      await agent.Activities.attend(this.selectedActivity!.id);
+      runInAction(() => {
+        //2 Butonada updateAttendance fonksiyonunu verdiğimiz için kullanıcı isGoing ise aktiviteden çıkartıyoruz isGoing değil ise aktiviteye ekliyoruz.
+        if (this.selectedActivity?.isGoing) {
+          //şu anda oturum açmış olan kullanıcıyı katılımcılar dizisinden filtreleyecektir. Yani attendeesin içerisinden şu anda istek atan kullacınıyı çıkaracaktır. Bu da eğer kullanıcı isGoing yani katılımcı ise yapılıyor çünkü katılımcı ise aktiviteden çıkmak istiyor anlamına gelmektedir. Eğer katılımcı değil ise aktiviteye katılmak istiyor demektir. Bu durumda aktiviteden çıkarılacaktır.
+          this.selectedActivity.attendees =
+            this.selectedActivity.attendees?.filter(
+              (a) => a.userName !== user?.username
+            );
+          this.selectedActivity.isGoing = false;
+        } else {
+          //Burada isGoing false ise aktiviteye katılmak istiyor demektir aktiviteye ekliyoruz kullanıcıyı.
+          const attendee = new Profile(user!);
+          this.selectedActivity?.attendees?.push(attendee);
+          this.selectedActivity!.isGoing = true;
+        }
+        this.activityRegistry.set(
+          this.selectedActivity!.id,
+          this.selectedActivity!
+        );
+      });
+    } catch (error) {
+      console.log("error");
+    } finally {
+      runInAction(() => (this.loading = false));
+    }
+  };
+
+  cancelActivityToggle = async () => {
+    this.loading = true; // Aktivite iptal edilirken geçici bir bekleme süresi imajı vermek için.
+    try {
+      //UpdateAttendance methodunda isteği atan kişi host ise aktivite iptal edilir katılımcı ise aktiviteden çıkarılır hiçbiri ise aktiviteye katılımcı olarak eklenir. Bu yüzden sadece aktivite id bilgisini iletmemiz yeterli geri kalanı application kısmı yapıyor.
+      await agent.Activities.attend(this.selectedActivity!.id);
+      runInAction(() => {
+        //runInAction mobx değişken değişikliklerinin algılanması için kullanılır.
+        //Burada aktivite iptali ne durumdaysa tersine çeviriyoruz mesela aktifti kullanıcı basınca pasif oldu. Pasifti kullanıcı basınca aktif olacak.
+        this.selectedActivity!.isCancelled =
+          !this.selectedActivity?.isCancelled;
+        //İşlem sonrası seçilen aktivitemiz ayarlandı.
+        this.activityRegistry.set(
+          this.selectedActivity!.id,
+          this.selectedActivity!
+        );
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      runInAction(() => (this.loading = false));
     }
   };
 }
