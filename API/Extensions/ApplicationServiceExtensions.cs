@@ -3,6 +3,7 @@ using Application.Core;
 using Application.Interfaces;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Infrastructure.Photos;
 using Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -50,6 +51,10 @@ namespace API.Extensions
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
             });*/
+
+            services.AddScoped<IPhotoAccessor, PhotoAccessor>();
+            //appsettings.jsondan cloudinary fotoğraf bulutunun ayralarının bulunduğu alanı çekip - CloudinarySettings sınıfımız türünde döndürüyoruz.
+            services.Configure<CloudinarySettings>(config.GetSection("Cloudinary"));
 
             return services;
          }

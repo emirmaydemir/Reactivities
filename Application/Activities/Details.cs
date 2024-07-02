@@ -29,6 +29,7 @@ namespace Application.Activities
             }
             public async Task<Result<ActivityDto>> Handle(Query request, CancellationToken cancellationToken)
             {
+                //aktivite tablosunu ActivityDto ile mapliyoruz bu sayede ActivityDto döndürebilirim.
                 var activity = await _context.Activities
                     .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync(x => x.Id == request.Id);

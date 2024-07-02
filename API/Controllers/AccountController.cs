@@ -27,7 +27,8 @@ namespace API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email); //Dbden kullanıcı maili varsa kullanıcı bilgilerini döndürüyor bize.
+            var user = await _userManager.Users.Include(p => p.Photos) //Giriş yaptığında kullanıcının fotoğrafınında dönmesini istediğimiz için include var nesneler veya listeleri users içerisinde belirtebilmemiz için include şart maalesef ki.
+                .FirstOrDefaultAsync(x => x.Email == loginDto.Email); //Dbden kullanıcı maili varsa kullanıcı bilgilerini döndürüyoruz fakat fotoğraflar listesi ile döndürüyorum include sayesinde. Yani user nesnesini fotoğrafı ile döndürüyoruz giriş yapan kullanıcı mailine bakarak.
 
             if(user == null) return Unauthorized();
 
@@ -85,7 +86,9 @@ namespace API.Controllers
             //Bu mekanizma, kullanıcının kimliği doğrulanmış bir istekte bulunmasını gerektirir, token'ındaki e-posta claim'ini kullanarak kullanıcıyı bulur ve kullanıcının bilgilerini bir DTO (Data Transfer Object) olarak döner. Bu şekilde, istemci tarafında kullanıcı bilgileri ve token'ı yeniden kullanılabilir.
             //Yani postmandan token ile istek atıyoruz ya bu endpointe işte o tokenin başlık bilgisinde email, username gibi bilgiler yer alıyor ya heh işte istek atan tokendeki Email bilgisini çekip mevcut kullanıcıyı buluyoruz.
             //Sonuçta her kullanıcının tokeni unique yani eşsiz. User ve claim denen şeyde tokenin içerisinde yer alan Email oluyor. Bu uç noktaya sadece token ile istek atabiliyoruz.
-            var user = await _userManager.FindByEmailAsync(User.FindFirstValue(ClaimTypes.Email));
+            //Include ile de dönen user nesnesine photos listesini eklemiş oluyoruz yani kullanıcı fotoğrafları ile birlikte dönüyor.
+            var user = await _userManager.Users.Include(p => p.Photos)
+                .FirstOrDefaultAsync(x => x.Email == User.FindFirstValue(ClaimTypes.Email));
 
             return CreateUserObject(user);
 
@@ -96,7 +99,7 @@ namespace API.Controllers
             return new UserDto
             {
                 DisplayName = user.DisplayName,
-                Image = null,
+                Image = user?.Photos?.FirstOrDefault(x => x.IsMain).Url, // Soru işareti sayesinde fotoğrafı olmayan kullanıcılar hata vermek yerine null döndürecek.
                 Token = _tokenService.CreateToken(user),
                 Username = user.UserName
             };

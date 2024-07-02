@@ -28,9 +28,10 @@ namespace Application.Core
                 .ForMember(d => d.HostUsername, o => o.MapFrom(s => s.Attendees
                     .FirstOrDefault(x => x.IsHost).AppUser.UserName));
             
-
+            //Kısacası burası sayesinde aktivite katılımcılarında aşağıdaki özellikler yer alıyor ve image main foto olarak gözüküyor.
             //Şimdi şöyle ActivityAttendee sınıfında AppUser sınıfından türemiş başka bir nesne bulunuyor ve bu nesnenin DisplayName, UserName ve Bio adlı üç özelliğini kullanmak istiyoruz.
             //Bu yüzden diyoruz ki profilede yer alan DisplayName Appuserdeki ile aynı -- Keza UserName ve Bio da aynı şekilde diye belirtiyoruz.
+            //Aktivite katılımcılarında image kısmına main kontrolü yaparar ana fotoğrafın kullanıcı profilinde olmasnı sağlıyoruz.
             /*
             Bu satır, ActivityAttendee sınıfından Profile sınıfına bir haritalama oluşturur. Burada çeşitli özellikler özel olarak yapılandırılmıştır:
             /////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,10 +39,17 @@ namespace Application.Core
             UserName, ActivityAttendee nesnesinin AppUser özelliğindeki UserName olarak haritalanır.
             Bio, ActivityAttendee nesnesinin AppUser özelliğindeki Bio olarak haritalanır.
             */
-            CreateMap<ActivityAttendee, Profiles.Profile>()
+            CreateMap<ActivityAttendee, AttendeeDto>()
                 .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.AppUser.DisplayName))
                 .ForMember(d => d.UserName, o => o.MapFrom(s => s.AppUser.UserName))
-                .ForMember(d => d.Bio, o => o.MapFrom(s => s.AppUser.Bio));
+                .ForMember(d => d.Bio, o => o.MapFrom(s => s.AppUser.Bio))
+                .ForMember(d => d.Image, o => o.MapFrom(s => s.AppUser.Photos.FirstOrDefault(x => x.IsMain).Url));
+            
+            //AppUser yani (Users) içerisinde Image değişkenimiz bulunmadığı için Profile ile mapliyoruz ve Image değişkenini belirtiyoruz.
+            //İkisi arasındaki tek fark image zaten o yüzden onu mapledik User tablosu yerine Profile dtosunu kullanabilmek için 
+            //Aynı zamanda imagenin main foto olmasını sağlıyoruz yani image değişkenini içerisine kullanıcının ana fotosunu koyuyoruz.
+            CreateMap<AppUser, Profiles.Profile>()
+                .ForMember(d => d.Image, o => o.MapFrom(s => s.Photos.FirstOrDefault(x => x.IsMain).Url));
         }
     }
 }
