@@ -14,12 +14,13 @@ import { Activity } from "../../../app/models/activity";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import ActivityListItemAttendee from "./ActivityListItemAttendee";
+import { observer } from "mobx-react-lite";
 
 interface Props {
   activity: Activity;
 }
 
-export default function ActivityListItem({ activity }: Props) {
+export default observer(function ActivityListItem({ activity }: Props) {
   return (
     <SegmentGroup>
       <Segment>
@@ -37,14 +38,17 @@ export default function ActivityListItem({ activity }: Props) {
               style={{ marginBottom: 3 }}
               size="tiny"
               circular
-              src="/assets/user.png"
+              src={activity.host?.image || "/assets/user.png"}
             />
             <ItemContent>
               <ItemHeader as={Link} to={`/activities/${activity.id}`}>
                 {activity.title}
               </ItemHeader>
               <ItemDescription>
-                Hosted By {activity.host?.displayName}
+                Hosted By{" "}
+                <Link to={`/profiles/${activity.hostUsername}`}>
+                  {activity.host?.displayName}
+                </Link>
               </ItemDescription>
               {activity.isHost && (
                 <Item.Description>
@@ -85,4 +89,4 @@ export default function ActivityListItem({ activity }: Props) {
       </Segment>
     </SegmentGroup>
   );
-}
+});

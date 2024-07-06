@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { router } from "../router/Routes";
 import { store } from "../stores/store";
 import { User, UserFormValues } from "../models/user";
+import { Photo, Profile } from "../models/profile";
 
 // Promise, gelecekte tamamlanacak (veya başarısız olacak) bir işlemi temsil eder. resolve: İşlem başarılı olduğunda çağrılır.
 const sleep = (delay: number) => {
@@ -98,9 +99,27 @@ const Account = {
     requests.post<User>("/account/register", user),
 };
 
+const Profiles = {
+  get: (username: string) => requests.get<Profile>(`/profiles/${username}`),
+  //Application katmanına bakacak olursan bu iş için Add.cs isimli bir sınıfın var ve FormData verisi alıyor. FormData HTTP isteklerinde dosya yüklemelerini yönetmek için kullanılan bir arayüzdür. Parametre olarak gelen dosyamızı apiye göndereceğiz.
+  uploadPhoto: (file: any) => {
+    let formData = new FormData(); //Öncelikle boş bir FormData nesnesi oluşturuyoruz.
+    formData.append("File", file); //ÖNEMLİ!! - Sonra dosyamızı formdata nesnesine ekliyoruz fakat ismini File yaptık çünkü Add.cs içerisinde bulunan IFormFile File değişkeni ile eşleşmeli ismi.
+    return axios.post<Photo>("photos", formData, {
+      //photos controllerine formdatamızı gönderiyoruz ve Burada Content-Type olarak multipart/form-data belirtilmiştir, bu da sunucuya form verisi gönderileceğini bildirir.
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  //Ana fotoğrafı güncellemek için.
+  setMainPhoto: (id: string) => axios.post(`/photos/${id}/setMain`, {}),
+  //Ana fotoğrafı silmek için.
+  deletePhoto: (id: string) => axios.delete(`/photos/${id}`),
+};
+
 const agent = {
   Activities,
   Account,
+  Profiles,
 };
 
 export default agent;

@@ -55,4 +55,9 @@ export default class UserStore {
       console.log(error);
     }
   };
+
+  //Bu fonksiyon mevcut kullanıcı profil fotoğrafını değiştirirse anlık olarak değişsin diye var.
+  setImage = (image: string) => {
+    if (this.user) this.user.image = image;
+  };
 }
