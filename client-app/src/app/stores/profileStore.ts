@@ -103,4 +103,26 @@ export default class ProfileStore {
       runInAction(() => (this.loading = false));
     }
   };
+
+  updateProfile = async (profile: Partial<Profile>) => {
+    this.loading = true;
+    try {
+      await agent.Profiles.updateProfile(profile); //API tarafında profilimizi güncelliyoruz fakat sayfayı yenilemedende verilerin değişmesi gerekdiği için mobx tarafını da güncelliyoruz mobx güncellemesi runinaction içerisinde yapılır.
+      runInAction(() => {
+        //Eğer display name değiştirildiyse profile tarafında kullanıcının profil resminin oradaki ve aktivitelerdeki adı değişmesi gerektiği için user tarafında da güncelleme yapıyoruz.
+        if (
+          profile.displayName &&
+          profile.displayName !== store.userStore.user?.displayName
+        ) {
+          store.userStore.setDisplayName(profile.displayName); //profile tarafının adını güncelledik fakat kullanıcının profil fotosnun orada yazan adıda güncellememiz lazım yoksa sayfayı yenilemeden güncellenmez. Bunun için userStore içerisinde yazdığım fonksiyonu çağırıyorum.
+          store.activityStore.setDisplayName(profile.displayName); //profile tarafının adını güncelledik fakat aktivite hostları ve katılımcılar tarafında yazan adıda güncellememiz lazım yoksa sayfayı yenilemeden güncellenmez. Bunun için activityStore içerisinde yazdığım fonksiyonu çağırıyorum.
+        }
+        this.profile = { ...this.profile, ...(profile as Profile) }; //Bu iki nesneyi birleştirir ve yeni bir nesne oluşturur. Yeni nesnede, profile nesnesindeki özellikler this.profile nesnesindekileri geçersiz kılar. Yani eski profile nesnesini yeni profile nesnesinde değişen değerler ile günceller.
+        this.loading = false;
+      });
+    } catch (error) {
+      console.log(error);
+      runInAction(() => (this.loading = false));
+    }
+  };
 }

@@ -102,6 +102,7 @@ const Account = {
 const Profiles = {
   get: (username: string) => requests.get<Profile>(`/profiles/${username}`),
   //Application katmanına bakacak olursan bu iş için Add.cs isimli bir sınıfın var ve FormData verisi alıyor. FormData HTTP isteklerinde dosya yüklemelerini yönetmek için kullanılan bir arayüzdür. Parametre olarak gelen dosyamızı apiye göndereceğiz.
+  //Burada form data eklediğimiz için request değilde axios kullanıyoruz çünkü requests içinde tanımladığımız body için uygun değil bunun bodysi
   uploadPhoto: (file: any) => {
     let formData = new FormData(); //Öncelikle boş bir FormData nesnesi oluşturuyoruz.
     formData.append("File", file); //ÖNEMLİ!! - Sonra dosyamızı formdata nesnesine ekliyoruz fakat ismini File yaptık çünkü Add.cs içerisinde bulunan IFormFile File değişkeni ile eşleşmeli ismi.
@@ -111,9 +112,14 @@ const Profiles = {
     });
   },
   //Ana fotoğrafı güncellemek için.
-  setMainPhoto: (id: string) => axios.post(`/photos/${id}/setMain`, {}),
+  setMainPhoto: (id: string) => requests.post(`/photos/${id}/setMain`, {}),
   //Ana fotoğrafı silmek için.
-  deletePhoto: (id: string) => axios.delete(`/photos/${id}`),
+  deletePhoto: (id: string) => requests.del(`/photos/${id}`),
+  //Biografi ve ad bilgilerini güncelleyebilmek için.
+  //Partial açıklama: Bu durumda, updateProfile fonksiyonu Partial<Profile> türünde bir nesne alır ve bu nesne sadece bazı Profile özelliklerini içerebilir. Bu, profilde yalnızca değişiklik yapmak istediğiniz alanları belirterek bir profil güncellemesi yapmanıza olanak tanır.
+  //Partial: Yani tüm profile nesnesini almak yerine sadece bio ve display nameyi alacağız.
+  updateProfile: (profile: Partial<Profile>) =>
+    requests.put<void>(`/profiles`, profile),
 };
 
 const agent = {

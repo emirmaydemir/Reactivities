@@ -60,4 +60,8 @@ export default class UserStore {
   setImage = (image: string) => {
     if (this.user) this.user.image = image;
   };
+  //Bu fonksiyon profile tarafında displayname değiştirilince mevcut kullanıcının adının da değişmesini sağlar.
+  setDisplayName = (name: string) => {
+    if (this.user) this.user.displayName = name;
+  };
 }

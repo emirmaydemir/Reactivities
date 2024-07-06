@@ -237,7 +237,8 @@ export default class ActivityStore {
     }
   };
 
-  //TAMAMEN BEN YAZDIM BURAYI
+  ///////////////////////////////////////////////////////////////////////////////////////////
+  //setImage ve setDisplayName TAMAMEN BEN YAZDIM
   //Burası sadece profileStore içerisindeki setMainPhoto fonksiyonu tetiklenince çalışacaktır.
   //Kullanıcı profileStore kısmında fotoğrafını güncellerse o güncellemenin aktivitelerede yansıması gerekiyor o yüzden burayıda güncelledik mobx tarafında. Aslında veritabanına kaydettiği için yansıyor bu kod olmadan ama kullanıcı sayfayı yenilemeden göremiyeceği için mobx üzerinde de güncelledik.
   setImage(image: string) {
@@ -253,4 +254,19 @@ export default class ActivityStore {
       });
     });
   }
+
+  setDisplayName = (name: string) => {
+    const username = store.userStore.user?.username; //Sistemdeki mevcut kullanıcıyı çekiyoruz.
+    this.activityRegistry.forEach((activity) => {
+      //Aktivitelerin listesini dönüyoruz ve host olunan aktivite ile sistemdeki kullanıcı aynı kişi ise adı güncelliyoruz. Host kontrolü yapılmasının sebebi sadece adı değiştiren kişinin aktivite adı değişmeli yoksa herkesin ki değişir.
+      if (activity.hostUsername === username) activity.host!.displayName = name;
+      // Attendees listesindeki hostun adını güncelliyoruz. Mevcut kullanıcının ismini katılımcılarda aratıp o aktivitede ismi varsa güncelliyoruz.
+      activity.attendees!.forEach((attendee) => {
+        if (attendee.userName === username) {
+          attendee.displayName = name;
+        }
+      });
+    });
+  };
+  ///////////////////////////////////////////////////////////////////////////////////////////
 }
