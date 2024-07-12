@@ -27,7 +27,7 @@ namespace API.Extensions
             services.AddCors(opt =>{
                 opt.AddPolicy("CorsPolicy", policy =>
                 {
-                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+                    policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithOrigins("http://localhost:3000");
                 });
             });
             //Bu kod parçası, bir ASP.NET Core uygulamasında MediatR kütüphanesini kullanmanıza yardımcı olur.
@@ -55,6 +55,8 @@ namespace API.Extensions
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
             //appsettings.jsondan cloudinary fotoğraf bulutunun ayralarının bulunduğu alanı çekip - CloudinarySettings sınıfımız türünde döndürüyoruz.
             services.Configure<CloudinarySettings>(config.GetSection("Cloudinary"));
+            //Chat için kullandığımız servis.
+            services.AddSignalR();
 
             return services;
          }

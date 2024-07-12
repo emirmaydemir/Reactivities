@@ -237,6 +237,10 @@ export default class ActivityStore {
     }
   };
 
+  clearSelectedActivity = () => {
+    this.selectedActivity = undefined;
+  };
+
   ///////////////////////////////////////////////////////////////////////////////////////////
   //setImage ve setDisplayName TAMAMEN BEN YAZDIM
   //Burası sadece profileStore içerisindeki setMainPhoto fonksiyonu tetiklenince çalışacaktır.

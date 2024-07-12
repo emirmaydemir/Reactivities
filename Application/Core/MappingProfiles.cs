@@ -1,4 +1,5 @@
 using Application.Activities;
+using Application.Comments;
 using AutoMapper;
 using Domain;
 
@@ -50,6 +51,15 @@ namespace Application.Core
             //Aynı zamanda imagenin main foto olmasını sağlıyoruz yani image değişkenini içerisine kullanıcının ana fotosunu koyuyoruz.
             CreateMap<AppUser, Profiles.Profile>()
                 .ForMember(d => d.Image, o => o.MapFrom(s => s.Photos.FirstOrDefault(x => x.IsMain).Url));
+
+            //Çok kısa ve öz açıklıyorum şimdi CommentDto türünde veri döndüreceğiz ama bu verilerin Comment veritabanı ile eşleşmesi gerekiyor
+            //CreatedAt, Body ve Id gibi bilgiler birebir eşleştiği için bunları maplemeye gerek yok.
+            //Ama Author ismini verdiğimiz AppUser nesnesi içerisindeki UserName, DisplayName ve Image değişkenlerini algılaması için maplememiz lazım çünkü bunlar Authorun içerisinde ve otomatik maplenemiyor elimizle yapmamız gerekiyor.
+            //Peki neden Dto kullanıyoruz mesela kullanmasaydık Comments veritabanındaki tüm verileri aktarırdık Appuser nesnesinde bir sürü sütün var ama biz sadece lazım olanları aktarmak istediğimiz için Dto kullanıyoruz.
+            CreateMap<Comment, CommentDto>()
+                .ForMember(d => d.Username, o => o.MapFrom(s => s.Author.UserName))
+                .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.Author.DisplayName))
+                .ForMember(d => d.Image, o => o.MapFrom(s => s.Author.Photos.FirstOrDefault(x => x.IsMain).Url));
         }
     }
 }

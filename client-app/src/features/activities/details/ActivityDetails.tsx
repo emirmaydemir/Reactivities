@@ -15,12 +15,15 @@ export default observer(function ActivityDetails() {
     selectedActivity: activity,
     loadActivity,
     loadingInitial,
+    clearSelectedActivity,
   } = activityStore; //storede yer alan selectedActivitye activity ismini verdim daha rahat kullanım için
   const { id } = useParams();
 
+  //Şimdi use effect ekrana ilk girdiğimizde çalışıyor return kısmı ise ekrandan çıktığımızda çalışacak yani ekrandan çıkınca seçilen aktiviteyi bellekten sileceğiz.
   useEffect(() => {
     if (id) loadActivity(id);
-  }, [id, loadActivity]);
+    return () => clearSelectedActivity();
+  }, [id, loadActivity, clearSelectedActivity]);
 
   if (loadingInitial || !activity)
     return <LoadingComponent content="Loading App" />;
@@ -30,7 +33,7 @@ export default observer(function ActivityDetails() {
       <GridColumn width={10}>
         <ActivityDetailedHeader activity={activity} />
         <ActivityDetailedInfo activity={activity} />
-        <ActivityDetailedChat />
+        <ActivityDetailedChat activityId={activity.id} />
       </GridColumn>
       <GridColumn width={6}>
         <ActivityDetailedSidebar activity={activity} />

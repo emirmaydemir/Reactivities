@@ -1,5 +1,6 @@
 using API.Extensions;
 using API.Middleware;
+using API.SignalR;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -41,6 +42,9 @@ app.UseAuthentication(); //Önce kimlik doğrulama gelir. Çünkü kullanıcı d
 app.UseAuthorization(); //Sonra yetkilendirme gelir.
 
 app.MapControllers();
+
+app.MapHub<ChatHub>("/chat"); //Myhubta api olarak kullanılacağı için bir endpointe ihtiyacı var client tarafında istek atarken bu isim ile istek atıacağız çünkü. O yüzden hubumuza bir endpoint verdik. ChatHubta hubumuz oluyor özellikleri orada tanımlanıyor biz oluşturduk o sınıfı.
+
 //Bu hizmet kapsamı, genellikle bir istekle gelen HTTP talebinin işlenme süresi boyunca geçerlidir. Dolayısıyla, her istek için yeni bir hizmet kapsamı oluşturulur ve bu kapsam içinde çalışan hizmetler, işlem sona erdiğinde temizlenir.
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
