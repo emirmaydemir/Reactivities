@@ -15,12 +15,15 @@ export default observer(function ProfilePage() {
   */
   const { username } = useParams<{ username: string }>();
   const { profileStore } = useStore();
-  const { loadingProfile, loadProfile, profile } = profileStore;
+  const { loadingProfile, loadProfile, profile, setActiveTab } = profileStore;
 
   /*Burada her profil yüklenmesinde veya kullanıcı adı değişikliğinde useEffect sorgusu ile yeni kullanıcı profilinin oluşmasını sağlıyoruz useEffect bir değişiklik olduğunda api çağrısı yapabilmek için kullanılır. */
   useEffect(() => {
     if (username) loadProfile(username);
-  }, [loadProfile, username]);
+    return () => {
+      setActiveTab(0); //sekme değiştiğinde takipçi veya takip edilenlerin kalıntıları kalmasın diye ilgili sekmeleri sıfırlıyoruz. profilStore içerisine setActivetab değerini sıfırlayarak çözüyoruz durumu.
+    };
+  }, [loadProfile, username, setActiveTab]);
 
   if (loadingProfile)
     //apiye istek atılırsa ve loadingprofile profileStore içerisinde true yapılırsa apide verdiğimiz 1-2 saniyelik gecikme süresi boyunca ekranda Loading profile... yazmasını sağlıyoruz.

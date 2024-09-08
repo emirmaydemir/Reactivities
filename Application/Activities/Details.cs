@@ -2,11 +2,8 @@ using Application.Core;
 using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 using Persistence;
 
 namespace Application.Activities
@@ -22,8 +19,10 @@ namespace Application.Activities
         {
             private readonly DataContext _context;
             private readonly IMapper _mapper;
-            public Handler(DataContext context, IMapper mapper)
+            private readonly IUserAccessor _userAccessor;
+            public Handler(DataContext context, IMapper mapper, IUserAccessor userAccessor)
             {
+                _userAccessor = userAccessor;
                 _mapper = mapper;
                 _context = context; 
             }
@@ -31,7 +30,8 @@ namespace Application.Activities
             {
                 //aktivite tablosunu ActivityDto ile mapliyoruz bu sayede ActivityDto döndürebilirim.
                 var activity = await _context.Activities
-                    .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider)
+                    .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider,
+                        new {currentUsername = _userAccessor.GetUsername()}) // bu satırı ekledik çünkü MappingProfiles içerisinde şu an sistemde olan kullanıcıya erişmemiz gerekiyordu bizde buradan gönderiyoruz.)
                     .FirstOrDefaultAsync(x => x.Id == request.Id);
 
                 return Result<ActivityDto>.Success(activity);

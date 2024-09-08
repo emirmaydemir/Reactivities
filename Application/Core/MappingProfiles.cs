@@ -9,6 +9,7 @@ namespace Application.Core
     {
         public MappingProfiles()
         {
+            string currentUsername = null;
             CreateMap<Activity,Activity>();
 
             //EN ÖNEMLİ AÇILAMA bu map işlemi sayesinde sadece gerekli yerlerin maplenmesini ve çekilmesini sağladık mesela
@@ -44,13 +45,21 @@ namespace Application.Core
                 .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.AppUser.DisplayName))
                 .ForMember(d => d.UserName, o => o.MapFrom(s => s.AppUser.UserName))
                 .ForMember(d => d.Bio, o => o.MapFrom(s => s.AppUser.Bio))
-                .ForMember(d => d.Image, o => o.MapFrom(s => s.AppUser.Photos.FirstOrDefault(x => x.IsMain).Url));
+                .ForMember(d => d.Image, o => o.MapFrom(s => s.AppUser.Photos.FirstOrDefault(x => x.IsMain).Url))
+                .ForMember(d => d.FollowersCount, o => o.MapFrom(s => s.AppUser.Followers.Count))
+                .ForMember(d => d.FollowingCount, o => o.MapFrom(s => s.AppUser.Followings.Count))
+                .ForMember(d => d.Following,
+                    o => o.MapFrom(s => s.AppUser.Followers.Any(x => x.Observer.UserName == currentUsername))); //Burada şu an sayfasına baktığımız kullanıcının takipçiler listesinde mevcut giriş yapan kullanıcı bulunuyor mu diye true veya false dönüyoruz. Bu sayede sayfada takip ediliyor ya da takip ediniz diye bir ayrım yapabiliriz.
             
             //AppUser yani (Users) içerisinde Image değişkenimiz bulunmadığı için Profile ile mapliyoruz ve Image değişkenini belirtiyoruz.
             //İkisi arasındaki tek fark image zaten o yüzden onu mapledik User tablosu yerine Profile dtosunu kullanabilmek için 
             //Aynı zamanda imagenin main foto olmasını sağlıyoruz yani image değişkenini içerisine kullanıcının ana fotosunu koyuyoruz.
             CreateMap<AppUser, Profiles.Profile>()
-                .ForMember(d => d.Image, o => o.MapFrom(s => s.Photos.FirstOrDefault(x => x.IsMain).Url));
+                .ForMember(d => d.Image, o => o.MapFrom(s => s.Photos.FirstOrDefault(x => x.IsMain).Url))
+                .ForMember(d => d.FollowersCount, o => o.MapFrom(s => s.Followers.Count))
+                .ForMember(d => d.FollowingCount, o => o.MapFrom(s => s.Followings.Count))
+                .ForMember(d => d.Following,
+                    o => o.MapFrom(s => s.Followers.Any(x => x.Observer.UserName == currentUsername))); //Burada şu an sayfasına baktığımız kullanıcının takipçiler listesinde mevcut giriş yapan kullanıcı bulunuyor mu diye true veya false dönüyoruz. Bu sayede sayfada takip ediliyor ya da takip ediniz diye bir ayrım yapabiliriz.
 
             //Çok kısa ve öz açıklıyorum şimdi CommentDto türünde veri döndüreceğiz ama bu verilerin Comment veritabanı ile eşleşmesi gerekiyor
             //CreatedAt, Body ve Id gibi bilgiler birebir eşleştiği için bunları maplemeye gerek yok.

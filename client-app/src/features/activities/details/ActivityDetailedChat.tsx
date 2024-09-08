@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default observer(function ActivityDetailedChat({ activityId }: Props) {
-  const { commentStore, activityStore } = useStore();
+  const { commentStore } = useStore();
 
   useEffect(() => {
     //bileşen ilk açıldığında burası çalışır constructor gibi yani

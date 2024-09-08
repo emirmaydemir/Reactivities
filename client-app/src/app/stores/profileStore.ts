@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, reaction, runInAction } from "mobx";
 import { Photo, Profile } from "../models/profile";
 import agent from "../api/agent";
 import { toast } from "react-toastify";
@@ -9,10 +9,35 @@ export default class ProfileStore {
   loadingProfile = false;
   uploading = false;
   loading = false;
+  followings: Profile[] = [];
+  loadingFollowings = false;
+  activeTab = 0;
 
   constructor() {
     makeAutoObservable(this); //Bu yukarıda oluşturduğumuz değişkenleri otomatik olarak algılaması için kullanılan bir yapı.
+    /*reaction Nedir?
+      MobX'te reaction, bir "tepki" fonksiyonudur. Belirli bir observable (gözlemlenebilir) değeri izler ve bu değer her değiştiğinde bir yan etki (side effect) oluşturur. reaction ile iki ana bileşen vardır:
+
+      İzlenen değer (reaction'in ilk argümanı): Bir fonksiyon döndürür ve MobX buradaki değişkenin (observable state) değişimini izler.
+      Tepki fonksiyonu (reaction'in ikinci argümanı): İzlenen değer her değiştiğinde çalışacak bir fonksiyondur. */
+    reaction(
+      () => this.activeTab, // İzlenen değer -- bu her değiştiğinde reaction devreye girer.
+      (activeTab) => {
+        // Tepki fonksiyonu
+        if (activeTab === 3 || activeTab === 4) {
+          const predicate = activeTab === 3 ? "followers" : "following";
+          this.loadFollowings(predicate); // Tab değişimi takipçi veya takip edilenlerin bilgilerini yüklemek için API çağrısı yapar.
+        } else {
+          this.followings = []; // Eğer diğer tab'lar aktifse followings listesi temizlenir.
+        }
+      }
+    );
   }
+
+  //ProfileContent ekranında takipçi veya takip edilenler sekmesine bastığımızda bize index numarası geliyor onu bu fonksiyon ile değişkenimize atıyoruz.
+  setActiveTab = (activeTab: any) => {
+    this.activeTab = activeTab;
+  };
 
   //Mobx sınıflarını kendi içerisinde de çağırabiliriz ya da react kodları arasında çağırabiliriz.
   //Burada mobx sınıflarımızdan userStoreyi kullanarak şu an giriş yapan kullanı adını çektik ve bu ad profiline baktığımız kişi ile aynı kişi ise (yani kişi kendi profiline mi bakıyor diye kontrol ediyoruz) true döndü değilse false dönüyor.
@@ -123,6 +148,72 @@ export default class ProfileStore {
     } catch (error) {
       console.log(error);
       runInAction(() => (this.loading = false));
+    }
+  };
+
+  //Bu method takip etme veya takipten çıkma sonrası hem db tarafında hem görünen ekranda ilgili güncellemeleri yapar. Yani hem apiye istek atar hem de mobx değişikliklerini yapar.
+  updateFollowing = async (username: string, following: boolean) => {
+    this.loading = true;
+    try {
+      await agent.Profiles.updateFollowing(username); // burada apiye istek atarak db de takip bilgilerini güncelliyoruz.
+      store.activityStore.updateAttendeeFollowing(username); // Burada aktivite tarafında tüm takip bilgilerini güncelliyoruz. Db tarafında güncellendi fakat sayfayı yenilemeden ekranda değişikliklerin güncellenmesi için bunu yapmamız gerekiyor.
+      //RunInAction mobx değişkenlerini değiştireceğimiz zaman kullanmamız gereken ifadedir yani en üstte bulunan değişkenleri değiştireceğimiz zaman lazım oluyor.
+      //Burada profil tarafında takip bilgilerini güncelliyoruz db de değişti fakat sayfayı yenilemeye gerek kalmadan profil tarafında da güncel olması gerekiyor bilgilerin.
+      runInAction(() => {
+        //takip ettiğimiz veya takipten çıktığımız kişinin profiline bakıyorsak ekranın anlık olarak güncellenmesini sağlayan kod
+        if (
+          this.profile &&
+          this.profile.userName !== store.userStore.user?.username &&
+          this.profile.userName === username
+        ) {
+          following
+            ? this.profile.followersCount++
+            : this.profile.followersCount--;
+          this.profile.following = !this.profile.following;
+        }
+        //takip ettikten veya takipten çıktıktan sonra kendi profilimize bakıyorsak ekranın anlık olarak güncellenmesini sağlayan kod
+        if (
+          this.profile &&
+          this.profile.userName === store.userStore.user?.username
+        ) {
+          following
+            ? this.profile.followingCount++
+            : this.profile.followingCount--;
+        }
+        //takip ettikten veya takipten çıktıktan sonra tüm profillerde takip ve takipçi bilgilerinin anlık olarak güncellenmesini sağlayan kod. Sayfayı yenileyince hepsi güncellenir fakat biz sayfayı yenilemeden güncel kalsın istiyoruz.
+        this.followings.forEach((profile) => {
+          if (profile.userName === username) {
+            profile.following
+              ? profile.followersCount--
+              : profile.followersCount++;
+            profile.following = !profile.following;
+          }
+        });
+        this.loading = false;
+      });
+    } catch (error) {
+      console.log(error);
+      runInAction(() => (this.loading = false));
+    }
+  };
+
+  //Takip ettiklerini ya da takipçilerini döndürmek için kullanıyoruz.
+  loadFollowings = async (predicate: string) => {
+    this.loadingFollowings = true; //Ufak bir gecikme efekti vermek için.
+    try {
+      //burada agent.ts üzerinden apiye istek atarak takip edilenleri ya da takipçileri döndürüyoruz.
+      const followings = await agent.Profiles.listFollowings(
+        this.profile!.userName,
+        predicate
+      );
+      //mobx değişkeni olan followings içerisine de takipçileri atıyoruz çünkü db de yer alan bu veriler bize lazımk sayfayı yenilemeye gerek kalmadan bazı işlemler yapabilmek için.
+      runInAction(() => {
+        this.followings = followings;
+        this.loadingFollowings = false;
+      });
+    } catch (error) {
+      console.log(error);
+      runInAction(() => (this.loadingFollowings = false));
     }
   };
 }

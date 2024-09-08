@@ -1,12 +1,10 @@
 using Application.Core;
-using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Persistence;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
+using Application.Interfaces;
 
 namespace Application.Activities
 {
@@ -21,11 +19,13 @@ namespace Application.Activities
         {
             private readonly DataContext _context;
             private readonly IMapper _mapper;
+            private readonly IUserAccessor _userAccessor;
             //constructor içerisinde db contexti alıyoruz çünkü verileri çekmek için db ye bağlanacağız
-            public Handler(DataContext context, IMapper mapper)
+            public Handler(DataContext context, IMapper mapper, IUserAccessor userAccessor)
             {
+                _userAccessor = userAccessor;
                 _mapper = mapper;
-                _context = context;  
+                _context = context;
             }
             public async Task<Result<List<ActivityDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
@@ -36,7 +36,8 @@ namespace Application.Activities
                 //Burada döndüreceğimiz şeyin bir ActivityDto nesnesi olmasını sağladık ProjectTo sayesinde yoksa veritabanındaki Activity modelimiz dönerdi ama biz mapleme ayarını yaptığımız ActivityDto nesnesinin dönmesini istiyoruz.
                 //Automapper sayesinde select sorgusu ile uzun uzun tüm sütunları çekme yükünden kurtulduk.
                 var activities = await _context.Activities
-                    .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider)
+                    .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider, 
+                        new {currentUsername = _userAccessor.GetUsername()}) // bu satırı ekledik çünkü MappingProfiles içerisinde şu an sistemde olan kullanıcıya erişmemiz gerekiyordu bizde buradan gönderiyoruz.
                     .ToListAsync();
 
                 return Result<List<ActivityDto>>.Success(activities);

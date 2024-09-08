@@ -273,4 +273,22 @@ export default class ActivityStore {
     });
   };
   ///////////////////////////////////////////////////////////////////////////////////////////
+
+  //Burası react tarafındaki aktiviteler yani burada yapılan değişiklik db tarafında değil front-end tarafında yapılıyor. ama apiye istek atsaydık db de etkilenirdi.
+  //db değiştirme işlemini profileStore.ts içerisinde updateFollowing methodu yapıyor zaten burayıda çağırıyor.
+  //Bir insanı takip edince veya takipten çıkınca tüm aktivitelerde o kişiyi bulup front-endi güncellememiz gerekiyordu.
+  //Biz de o yüzden tüm aktivitilerin içerisindeki katılımcılara sırayla baktık ve bizim aradığımız katılımcı var ise işlem yaptık.
+  //Takip ettiğimiz veya takipten çıktığımız insan aktivitenin katılımcısı ise takip ediyorsak takipçisini 1 arttırdık takipten çıktıysak 1 azalttık ve takip edip etmeme durumumuzu güncelledik.
+  updateAttendeeFollowing = (username: string) => {
+    this.activityRegistry.forEach((activity) => {
+      activity.attendees.forEach((attendee: Profile) => {
+        if (attendee.userName === username) {
+          attendee.following
+            ? attendee.followersCount--
+            : attendee.followersCount++;
+          attendee.following = !attendee.following;
+        }
+      });
+    });
+  };
 }

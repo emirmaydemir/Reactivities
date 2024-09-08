@@ -33,7 +33,8 @@ namespace Application.Profiles
             {
                 //ÖNEMLİ AÇIKLAMA: Users Tablosu ile bir DTO sınıfını falan eşleyebilmek için kullanıyoruz. Çünkü Users tablosunda baya bir sütun bulunuyor ve bu sistemi yavaşlatır bunun yerine sadece bize lazım olan Profile içerisindeki (UserName, DisplayName, Bio, Image ve Photos değişkenleri yeterli bizim için).
                 var user = await _context.Users
-                    .ProjectTo<Profile>(_mapper.ConfigurationProvider)
+                    .ProjectTo<Profile>(_mapper.ConfigurationProvider,
+                        new {currentUsername = _userAccessor.GetUsername()}) // bu satırı ekledik çünkü MappingProfiles içerisinde şu an sistemde olan kullanıcıya erişmemiz gerekiyordu bizde buradan gönderiyoruz.))
                     .SingleOrDefaultAsync(x => x.UserName == request.Username);
 
                 //Buna gerek yok sanırım çünkü zaten başarı durumunu ele alıyoruz + null HandleResult içerisinde.

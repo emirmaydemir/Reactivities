@@ -19,6 +19,7 @@ namespace Persistence
         public DbSet<ActivityAttendee> ActivityAttendees { get; set; }
         public DbSet<Photo> Photos { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<UserFollowing> UserFollowings { get; set; }
 
         //Bu yapılandırma, ActivityAttendee tablosunun AppUser ve Activity tabloları arasında bir ara tablo(join table) olarak hizmet vermesini sağlar, böylece bir kullanıcının birden fazla etkinliğe katılabilmesi ve bir etkinliğin birden fazla katılımcısı olabilmesi mümkün hale gelir.
         protected override void OnModelCreating(ModelBuilder builder)
@@ -40,7 +41,24 @@ namespace Persistence
             builder.Entity<Comment>()
                 .HasOne(a => a.Activity)
                 .WithMany(c => c.Comments)
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade); //eğer yorum silinirse aktiviteden silsin diye sanırım.
+            
+            //bu yapılandırma takipçiler için
+            builder.Entity<UserFollowing>(b =>
+            {
+                b.HasKey(k => new { k.ObserverId, k.TargetId });
+
+                b.HasOne(o => o.Observer)
+                    .WithMany(f => f.Followings)
+                    .HasForeignKey(o => o.ObserverId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                b.HasOne(t => t.Target)
+                    .WithMany(f => f.Followers)
+                    .HasForeignKey(t => t.TargetId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
         }
     }
 }

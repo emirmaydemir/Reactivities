@@ -120,6 +120,12 @@ const Profiles = {
   //Partial: Yani tüm profile nesnesini almak yerine sadece bio ve display nameyi alacağız.
   updateProfile: (profile: Partial<Profile>) =>
     requests.put<void>(`/profiles`, profile),
+  //Takip etmek veya takibi bırakmak için.
+  updateFollowing: (username: string) =>
+    requests.post(`/follow/${username}`, {}),
+  //Takip edilenlerin veya takipçilerin listesini döndürür. Predicate hangisini döndüreceğimize karar verir.
+  listFollowings: (username: string, predicate: string) =>
+    requests.get<Profile[]>(`/follow/${username}?predicate=${predicate}`),
 };
 
 const agent = {

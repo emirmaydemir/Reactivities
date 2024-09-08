@@ -13,7 +13,7 @@ export interface Activity {
   isGoing: boolean; //Katılımcı mı
   isHost: boolean; //Etkinliği oluşturan kişi mi
   host?: Profile;
-  attendees?: Profile[];
+  attendees: Profile[];
 }
 
 //Etkinlik oluştururken kullandığımız alan için yapıyoruz bunu. ! koymak zorunda kalmıyoruz bu sayede. Her yere ünlem koya koya kodlar karışmıştı. Ve başlangıç değeri atamış olduk.
